@@ -1,0 +1,25 @@
+{
+  "name": "broccoli-module-normalizer",
+  "version": "0.0.0",
+  "description": "Broccoli plugin to remove `modules/` subdirectory from legacy ember-cli addons.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha",
+    "test-watch": "npm test -- -w --reporter min"
+  },
+  "contributors": [
+    "Chris Manson <chris@stonecircle.io>",
+    "Robert Jackson <me@rwjblue.com>"
+  ],
+  "repository": "https://github.com/stonecircle/broccoli-module-normalizer",
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^4.0.1",
+    "broccoli-test-helper": "^1.2.0"
+  },
+  "dependencies": {
+    "broccoli-plugin": "^1.3.0",
+    "symlink-or-copy": "^1.1.8"
+  }
+}

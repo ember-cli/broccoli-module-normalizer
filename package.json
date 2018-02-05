@@ -14,9 +14,10 @@
   "repository": "https://github.com/stonecircle/broccoli-module-normalizer",
   "license": "MIT",
   "devDependencies": {
+    "broccoli-test-helper": "^1.2.0",
     "chai": "^4.1.2",
-    "mocha": "^4.0.1",
-    "broccoli-test-helper": "^1.2.0"
+    "co": "^4.6.0",
+    "mocha": "^4.0.1"
   },
   "dependencies": {
     "broccoli-plugin": "^1.3.0",

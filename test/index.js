@@ -7,9 +7,11 @@ const createBuilder = helper.createBuilder;
 const createTempDir = helper.createTempDir;
 const ModuleNormalizer = require('../index');
 const setSymlinkOrCopyOptions = require('symlink-or-copy').setOptions;
+const sinon = require('sinon');
 
 describe('Fix Module Folders', function() {
   let input, output;
+  let callback;
 
   [true, false, undefined].forEach((canSymlink) => {
 
@@ -24,8 +26,11 @@ describe('Fix Module Folders', function() {
           canSymlink
         });
 
+        callback = sinon.spy();
+
         let subject = new ModuleNormalizer(input.path(), {
-          canSymlink
+          canSymlink,
+          callback
         });
         output = createBuilder(subject);
       }));
@@ -171,6 +176,21 @@ describe('Fix Module Folders', function() {
             'index.js': `exports { * } from './whateverElse'`
           }
         });
+      }));
+
+      it('should call a callback if the modules folder exists', co.wrap(function*() {
+        // INITIAL
+        input.write({
+          'modules': {
+            'ember-data': {
+              'index.js': `exports { * } from './whatever'`
+            }
+          }
+        });
+
+        yield output.build();
+
+        expect(callback.args).to.deep.equal([['ember-data']]);
       }));
     });
   });

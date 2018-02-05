@@ -4,14 +4,18 @@ const Plugin = require('broccoli-plugin');
 const fs = require('fs');
 const path = require('path');
 const symlinkOrCopy = require('symlink-or-copy');
+const walkSync = require('walk-sync');
+const rimraf = require('rimraf');
 
 const symlinkOrCopySync = symlinkOrCopy.sync;
 
 module.exports = class ModuleNormalizer extends Plugin {
-  constructor(input) {
+  constructor(input, options) {
     super([input], {
       persistentOutput: true
     });
+
+    this._options = options || {};
 
     this._hasRan = false;
   }
@@ -21,22 +25,67 @@ module.exports = class ModuleNormalizer extends Plugin {
       return;
     }
 
-    let symlinkSource;
+    let inputPath = this.inputPaths[0];
+    let outputPath = this.outputPath;
 
-    let modulesPath = path.join(this.inputPaths[0], 'modules');
+    let modulesPath = path.join(inputPath, 'modules');
+    let modules;
     if (fs.existsSync(modulesPath)) {
-      symlinkSource = modulesPath;
+      modules = fs.readdirSync(modulesPath);
+
+      if (this._options.callback) {
+        modules.forEach(dir => this._options.callback(dir));
+      }
     } else {
-      symlinkSource = this.inputPaths[0];
+      modules = [];
     }
 
     if (this._hasRan) {
-      fs.unlinkSync(this.outputPath);
-    } else {
-      fs.rmdirSync(this.outputPath);
+      rimraf.sync(outputPath);
+      fs.mkdirSync(outputPath);
     }
 
-    symlinkOrCopySync(symlinkSource, this.outputPath);
+    let dirs = fs.readdirSync(inputPath).filter(dir => dir !== 'modules');
+
+    let intersection = dirs.filter(dir => modules.indexOf(dir) !== -1);
+    let modulesOnly = modules.filter(dir => dirs.indexOf(dir) === -1);
+    let nonModules = dirs.filter(dir => modules.indexOf(dir) === -1);
+
+    for (let dir of intersection) {
+      let files = [[dir, dir]]
+        .concat(walkSync(path.join(modulesPath, dir)).map(file => [path.join('modules', dir, file), path.join(dir, file)]))
+        .concat(walkSync(path.join(inputPath, dir)).map(file => [path.join(dir, file), path.join(dir, file)]));
+
+      let visited = new Set();
+
+      for (let pair of files) {
+        if (visited.has(pair[1])) {
+          continue;
+        }
+
+        let inputFilePath = path.join(inputPath, pair[0]);
+        let outputFilePath = path.join(outputPath, pair[1]);
+
+        if (fs.statSync(inputFilePath).isDirectory()) {
+          fs.mkdirSync(outputFilePath);
+        } else {
+          symlinkOrCopySync(inputFilePath, outputFilePath);
+        }
+
+        visited.add(pair[1]);
+      }
+    }
+
+    let files = modulesOnly.map(file => [path.join('modules', file), file])
+      .concat(nonModules.map(file => [file, file]));
+
+    for (let pair of files) {
+      let inputDirPath = path.join(inputPath, pair[0]);
+      let outputDirPath = path.join(outputPath, pair[1]);
+
+      symlinkOrCopySync(inputDirPath, outputDirPath);
+    }
+
     this._hasRan = true;
   }
 };

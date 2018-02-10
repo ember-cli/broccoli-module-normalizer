@@ -10,14 +10,16 @@ const symlinkOrCopySync = symlinkOrCopy.sync;
 module.exports = class ModuleNormalizer extends Plugin {
   constructor(input) {
     super([input], {
-      persistentOutput: true,
+      persistentOutput: true
     });
 
     this._hasRan = false;
   }
 
   build() {
-    if (this._hasRan && symlinkOrCopy.canSymlink) { return; }
+    if (this._hasRan && symlinkOrCopy.canSymlink) {
+      return;
+    }
 
     let symlinkSource;
 
@@ -37,4 +39,4 @@ module.exports = class ModuleNormalizer extends Plugin {
     symlinkOrCopySync(symlinkSource, this.outputPath);
     this._hasRan = true;
   }
-}
+};

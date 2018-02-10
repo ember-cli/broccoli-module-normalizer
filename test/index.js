@@ -1,3 +1,5 @@
+'use strict';
+
 const helper = require('broccoli-test-helper');
 const co = require('co');
 const expect = require('chai').expect;
@@ -22,7 +24,7 @@ describe('Fix Module Folders', function() {
           canSymlink
         });
 
-        const subject = new ModuleNormalizer(input.path(), {
+        let subject = new ModuleNormalizer(input.path(), {
           canSymlink
         });
         output = createBuilder(subject);

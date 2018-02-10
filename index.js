@@ -4,8 +4,8 @@ const Plugin = require('broccoli-plugin');
 const fs = require('fs');
 const path = require('path');
 const symlinkOrCopy = require('symlink-or-copy');
-const walkSync = require('walk-sync');
 const rimraf = require('rimraf');
+const MergeTrees = require('merge-trees');
 
 module.exports = class ModuleNormalizer extends Plugin {
   constructor(inputNodes, options) {
@@ -20,23 +20,28 @@ module.exports = class ModuleNormalizer extends Plugin {
   }
 
   build() {
-    if (this._hasRan && symlinkOrCopy.canSymlink) {
+    if (this._noChange && symlinkOrCopy.canSymlink) {
       return;
     }
 
     let inputPath = this.inputPaths[0];
     let outputPath = this.outputPath;
+    let inputModulesPath = path.join(inputPath, 'modules');
+    let outputModulesPath = path.join(outputPath, 'modules');
 
-    let modulesPath = path.join(inputPath, 'modules');
-    let modules;
-    if (fs.existsSync(modulesPath)) {
-      modules = fs.readdirSync(modulesPath);
-
-      if (this.options.callback) {
-        this.options.callback();
+    if (!fs.existsSync(inputModulesPath)) {
+      if (this._hasRan) {
+        fs.unlinkSync(outputPath);
+      } else {
+        fs.rmdirSync(outputPath);
       }
-    } else {
-      modules = [];
+
+      symlinkOrCopy.sync(inputPath, outputPath);
+
+      this._noChange = true;
+      this._hasRan = true;
+
+      return;
     }
 
     if (this._hasRan) {
@@ -44,45 +49,23 @@ module.exports = class ModuleNormalizer extends Plugin {
       fs.mkdirSync(outputPath);
     }
 
-    let dirs = fs.readdirSync(inputPath).filter(dir => dir !== 'modules');
-
-    let intersection = dirs.filter(dir => modules.indexOf(dir) !== -1);
-    let modulesOnly = modules.filter(dir => dirs.indexOf(dir) === -1);
-    let nonModules = dirs.filter(dir => modules.indexOf(dir) === -1);
-
-    for (let dir of intersection) {
-      let files = [[dir, dir]]
-        .concat(walkSync(path.join(modulesPath, dir)).map(file => [path.join('modules', dir, file), path.join(dir, file)]))
-        .concat(walkSync(path.join(inputPath, dir)).map(file => [path.join(dir, file), path.join(dir, file)]));
-
-      let visited = new Set();
-
-      for (let pair of files) {
-        if (visited.has(pair[1])) {
-          continue;
-        }
-
-        let inputFilePath = path.join(inputPath, pair[0]);
-        let outputFilePath = path.join(outputPath, pair[1]);
-
-        if (fs.statSync(inputFilePath).isDirectory()) {
-          fs.mkdirSync(outputFilePath);
-        } else {
-          symlinkOrCopy.sync(inputFilePath, outputFilePath);
-        }
-
-        visited.add(pair[1]);
+    let mergeTrees = new MergeTrees(
+      [
+        inputPath,
+        inputModulesPath
+      ],
+      this.outputPath,
+      {
+        overwrite: true,
+        annotation: this.options.annotation
       }
-    }
+    );
+    mergeTrees.merge();
 
-    let files = modulesOnly.map(file => [path.join('modules', file), file])
-      .concat(nonModules.map(file => [file, file]));
+    rimraf.sync(outputModulesPath);
 
-    for (let pair of files) {
-      let inputDirPath = path.join(inputPath, pair[0]);
-      let outputDirPath = path.join(outputPath, pair[1]);
-
-      symlinkOrCopy.sync(inputDirPath, outputDirPath);
+    if (this.options.callback) {
+      this.options.callback();
     }
 
     this._hasRan = true;

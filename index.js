@@ -11,11 +11,14 @@ const symlinkOrCopySync = symlinkOrCopy.sync;
 
 module.exports = class ModuleNormalizer extends Plugin {
   constructor(input, options) {
+    options || {};
+
     super([input], {
-      persistentOutput: true
+      persistentOutput: true,
+      annotation: options.annotation
     });
 
-    this._options = options || {};
+    this.options = options;
 
     this._hasRan = false;
   }
@@ -33,8 +36,8 @@ module.exports = class ModuleNormalizer extends Plugin {
     if (fs.existsSync(modulesPath)) {
       modules = fs.readdirSync(modulesPath);
 
-      if (this._options.callback) {
-        modules.forEach(dir => this._options.callback(dir));
+      if (this.options.callback) {
+        modules.forEach(dir => this.options.callback(dir));
       }
     } else {
       modules = [];

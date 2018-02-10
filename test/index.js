@@ -7,9 +7,11 @@ const createBuilder = helper.createBuilder;
 const createTempDir = helper.createTempDir;
 const ModuleNormalizer = require('../index');
 const setSymlinkOrCopyOptions = require('symlink-or-copy').setOptions;
+const sinon = require('sinon');
 
 describe('Fix Module Folders', function() {
   let input, output;
+  let callback;
 
   [true, false, undefined].forEach((canSymlink) => {
 
@@ -24,8 +26,11 @@ describe('Fix Module Folders', function() {
           canSymlink
         });
 
+        callback = sinon.spy();
+
         let subject = new ModuleNormalizer(input.path(), {
-          canSymlink
+          canSymlink,
+          callback
         });
         output = createBuilder(subject);
       }));
@@ -82,6 +87,62 @@ describe('Fix Module Folders', function() {
         expect(output.changes()).to.deep.equal({});
       }));
 
+      it('should handle files in both modules folder and root', co.wrap(function*() {
+        // INITIAL
+        input.write({
+          'modules': {
+            'ember-data': {
+              'index.js': `exports { * } from './whatever'`
+            }
+          },
+          'ember-inflector': {
+            'index.js': `exports { * } from './whateverElse'`
+          }
+        });
+
+        yield output.build();
+
+        expect(output.read()).to.deep.equal({
+          'ember-data': {
+            'index.js': `exports { * } from './whatever'`
+          },
+          'ember-inflector': {
+            'index.js': `exports { * } from './whateverElse'`
+          }
+        });
+
+        yield output.build();
+
+        expect(output.changes()).to.deep.equal({});
+      }));
+
+      it('should handle files in both modules folder and root with same name', co.wrap(function*() {
+        // INITIAL
+        input.write({
+          'modules': {
+            'ember-data': {
+              'whatever.js': `exports { * } from './whatever'`
+            }
+          },
+          'ember-data': {
+            'whateverElse.js': `exports { * } from './whateverElse'`
+          }
+        });
+
+        yield output.build();
+
+        expect(output.read()).to.deep.equal({
+          'ember-data': {
+            'whatever.js': `exports { * } from './whatever'`,
+            'whateverElse.js': `exports { * } from './whateverElse'`
+          }
+        });
+
+        yield output.build();
+
+        expect(output.changes()).to.deep.equal({});
+      }));
+
       it('should have updated the contents of the addon file if the addon updates its contents', co.wrap(function*() {
         // INITIAL
         input.write({
@@ -115,6 +176,21 @@ describe('Fix Module Folders', function() {
             'index.js': `exports { * } from './whateverElse'`
           }
         });
+      }));
+
+      it('should call a callback if the modules folder exists', co.wrap(function*() {
+        // INITIAL
+        input.write({
+          'modules': {
+            'ember-data': {
+              'index.js': `exports { * } from './whatever'`
+            }
+          }
+        });
+
+        yield output.build();
+
+        expect(callback.args).to.deep.equal([['ember-data']]);
       }));
     });
   });

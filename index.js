@@ -36,8 +36,10 @@ module.exports = class ModuleNormalizer extends Plugin {
     if (fs.existsSync(modulesPath)) {
       modules = fs.readdirSync(modulesPath);
 
-      if (this.options.callback) {
-        modules.forEach(dir => this.options.callback(dir));
+      if (!this._hasRan) {
+        if (this.options.callback) {
+          this.options.callback();
+        }
       }
     } else {
       modules = [];

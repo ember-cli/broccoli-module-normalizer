@@ -44,7 +44,6 @@ describe('Fix Module Folders', function() {
       }));
 
       it('should remove the modules folder if it exists', co.wrap(function*() {
-        // INITIAL
         input.write({
           'modules': {
             'ember-data': {
@@ -67,7 +66,6 @@ describe('Fix Module Folders', function() {
       }));
 
       it('should do nothing if there is no modules folder', co.wrap(function*() {
-        // INITIAL
         input.write({
           'ember-data': {
             'index.js': `exports { * } from './whatever'`
@@ -88,7 +86,6 @@ describe('Fix Module Folders', function() {
       }));
 
       it('should handle files in both modules folder and root', co.wrap(function*() {
-        // INITIAL
         input.write({
           'modules': {
             'ember-data': {
@@ -117,7 +114,6 @@ describe('Fix Module Folders', function() {
       }));
 
       it('should handle files in both modules folder and root with same name', co.wrap(function*() {
-        // INITIAL
         input.write({
           'modules': {
             'ember-data': {
@@ -144,7 +140,6 @@ describe('Fix Module Folders', function() {
       }));
 
       it('should have updated the contents of the addon file if the addon updates its contents', co.wrap(function*() {
-        // INITIAL
         input.write({
           'modules': {
             'ember-data': {
@@ -179,7 +174,6 @@ describe('Fix Module Folders', function() {
       }));
 
       it('should call a callback if the modules folder exists', co.wrap(function*() {
-        // INITIAL
         input.write({
           'modules': {
             'ember-data': {
@@ -190,7 +184,13 @@ describe('Fix Module Folders', function() {
 
         yield output.build();
 
-        expect(callback.args).to.deep.equal([['ember-data']]);
+        expect(callback.calledOnce).to.be.ok;
+
+        callback.reset();
+
+        yield output.build();
+
+        expect(callback.called).to.not.be.ok;
       }));
     });
   });

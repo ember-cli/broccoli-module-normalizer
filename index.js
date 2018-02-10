@@ -11,7 +11,7 @@ const symlinkOrCopySync = symlinkOrCopy.sync;
 
 module.exports = class ModuleNormalizer extends Plugin {
   constructor(input, options) {
-    options || {};
+    options = options || {};
 
     super([input], {
       persistentOutput: true,

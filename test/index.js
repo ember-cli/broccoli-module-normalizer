@@ -5,7 +5,7 @@ const co = require('co');
 const expect = require('chai').expect;
 const createBuilder = helper.createBuilder;
 const createTempDir = helper.createTempDir;
-const ModuleNormalizer = require('../index');
+const ModuleNormalizer = require('..');
 const setSymlinkOrCopyOptions = require('symlink-or-copy').setOptions;
 const sinon = require('sinon');
 
@@ -17,7 +17,7 @@ describe('Fix Module Folders', function() {
 
     describe(`- canSymlink: ${canSymlink} -`, function() {
 
-      beforeEach(co.wrap(function*() {
+      beforeEach(co.wrap(function * () {
         input = yield createTempDir();
 
         setSymlinkOrCopyOptions({
@@ -35,15 +35,12 @@ describe('Fix Module Folders', function() {
         output = createBuilder(subject);
       }));
 
-      afterEach(co.wrap(function*() {
+      afterEach(co.wrap(function * () {
         yield input.dispose();
-
-        if (output) {
-          yield output.dispose();
-        }
+        yield output.dispose();
       }));
 
-      it('should remove the modules folder if it exists', co.wrap(function*() {
+      it('should remove the modules folder if it exists', co.wrap(function * () {
         input.write({
           'modules': {
             'ember-data': {
@@ -65,7 +62,7 @@ describe('Fix Module Folders', function() {
         expect(output.changes()).to.deep.equal({});
       }));
 
-      it('should do nothing if there is no modules folder', co.wrap(function*() {
+      it('should do nothing if there is no modules folder', co.wrap(function * () {
         input.write({
           'ember-data': {
             'index.js': `exports { * } from './whatever'`
@@ -85,7 +82,7 @@ describe('Fix Module Folders', function() {
         expect(output.changes()).to.deep.equal({});
       }));
 
-      it('should handle files in both modules folder and root', co.wrap(function*() {
+      it('should handle files in both modules folder and root', co.wrap(function * () {
         input.write({
           'modules': {
             'ember-data': {
@@ -113,7 +110,7 @@ describe('Fix Module Folders', function() {
         expect(output.changes()).to.deep.equal({});
       }));
 
-      it('should handle files in both modules folder and root with same name', co.wrap(function*() {
+      it('should handle files in both modules folder and root with same name', co.wrap(function * () {
         input.write({
           'modules': {
             'ember-data': {
@@ -139,7 +136,7 @@ describe('Fix Module Folders', function() {
         expect(output.changes()).to.deep.equal({});
       }));
 
-      it('should have updated the contents of the addon file if the addon updates its contents', co.wrap(function*() {
+      it('should have updated the contents of the addon file if the addon updates its contents', co.wrap(function * () {
         input.write({
           'modules': {
             'ember-data': {
@@ -173,7 +170,7 @@ describe('Fix Module Folders', function() {
         });
       }));
 
-      it('should call a callback if the modules folder exists', co.wrap(function*() {
+      it('should call a callback if the modules folder exists', co.wrap(function * () {
         input.write({
           'modules': {
             'ember-data': {

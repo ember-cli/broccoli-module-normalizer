@@ -7,20 +7,16 @@ const symlinkOrCopy = require('symlink-or-copy');
 const walkSync = require('walk-sync');
 const rimraf = require('rimraf');
 
-const symlinkOrCopySync = symlinkOrCopy.sync;
-
 module.exports = class ModuleNormalizer extends Plugin {
-  constructor(input, options) {
+  constructor(inputNodes, options) {
     options = options || {};
 
-    super([input], {
+    super([inputNodes], {
       persistentOutput: true,
       annotation: options.annotation
     });
 
     this.options = options;
-
-    this._hasRan = false;
   }
 
   build() {
@@ -74,7 +70,7 @@ module.exports = class ModuleNormalizer extends Plugin {
         if (fs.statSync(inputFilePath).isDirectory()) {
           fs.mkdirSync(outputFilePath);
         } else {
-          symlinkOrCopySync(inputFilePath, outputFilePath);
+          symlinkOrCopy.sync(inputFilePath, outputFilePath);
         }
 
         visited.add(pair[1]);
@@ -88,7 +84,7 @@ module.exports = class ModuleNormalizer extends Plugin {
       let inputDirPath = path.join(inputPath, pair[0]);
       let outputDirPath = path.join(outputPath, pair[1]);
 
-      symlinkOrCopySync(inputDirPath, outputDirPath);
+      symlinkOrCopy.sync(inputDirPath, outputDirPath);
     }
 
     this._hasRan = true;

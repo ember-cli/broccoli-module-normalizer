@@ -182,12 +182,6 @@ describe('Fix Module Folders', function() {
         yield output.build();
 
         expect(callback.calledOnce).to.be.ok;
-
-        callback.resetHistory();
-
-        yield output.build();
-
-        expect(callback.called).to.not.be.ok;
       }));
     });
   });

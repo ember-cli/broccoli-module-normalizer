@@ -186,7 +186,7 @@ describe('Fix Module Folders', function() {
 
         expect(callback.calledOnce).to.be.ok;
 
-        callback.reset();
+        callback.resetHistory();
 
         yield output.build();
 

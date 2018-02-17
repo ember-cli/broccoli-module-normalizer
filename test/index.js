@@ -3,24 +3,24 @@
 const helper = require('broccoli-test-helper');
 const co = require('co');
 const expect = require('chai').expect;
+const sinon = require('sinon');
+const symlinkOrCopy = require('symlink-or-copy');
+const ModuleNormalizer = require('..');
 const createBuilder = helper.createBuilder;
 const createTempDir = helper.createTempDir;
-const ModuleNormalizer = require('..');
-const setSymlinkOrCopyOptions = require('symlink-or-copy').setOptions;
-const sinon = require('sinon');
 
 describe('Fix Module Folders', function() {
   let input, output;
   let callback;
 
-  [true, false, undefined].forEach((canSymlink) => {
+  [true, false, undefined].forEach(canSymlink => {
 
     describe(`- canSymlink: ${canSymlink} -`, function() {
 
       beforeEach(co.wrap(function * () {
         input = yield createTempDir();
 
-        setSymlinkOrCopyOptions({
+        symlinkOrCopy.setOptions({
           isWindows: process.platform === 'win32',
           fs: require('fs'),
           canSymlink
@@ -147,12 +147,6 @@ describe('Fix Module Folders', function() {
 
         yield output.build();
 
-        expect(output.read()).to.deep.equal({
-          'ember-data': {
-            'index.js': `exports { * } from './whatever'`
-          }
-        });
-
         input.write({
           'modules': {
             'ember-data': {
@@ -167,6 +161,10 @@ describe('Fix Module Folders', function() {
           'ember-data': {
             'index.js': `exports { * } from './whateverElse'`
           }
+        });
+
+        expect(output.changes()).to.deep.equal({
+          'ember-data/index.js': 'change'
         });
       }));
 
